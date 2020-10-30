@@ -32,7 +32,7 @@ import abc
 import sys
 from Crypto.Util.py3compat import byte_string
 from Crypto.Util._file_system import pycryptodome_filename
-
+from importlib import util, machinery
 #
 # List of file suffixes for Python extensions
 #
@@ -171,14 +171,15 @@ except ImportError:
     null_pointer = None
 
     def load_lib(name, cdecl):
-        import platform
-        bits, linkage = platform.architecture()
-        if "." not in name and not linkage.startswith("Win"):
-            full_name = find_library(name)
-            if full_name is None:
-                raise OSError("Cannot load library '%s'" % name)
-            name = full_name
-        return CDLL(name)
+        # import platform
+        # bits, linkage = platform.architecture()
+        # if "." not in name and not linkage.startswith("Win"):
+        #     full_name = find_library(name)
+        #     if full_name is None:
+        #         raise OSError("Cannot load library '%s'" % name)
+        #     name = full_name
+        return util.find_spec(name)
+        # return CDLL(name)
 
     def get_c_string(c_string):
         return c_string.value
@@ -285,18 +286,18 @@ def load_pycryptodome_raw_lib(name, cdecl):
 
     @cdecl, the C function declarations.
     """
-
-    split = name.split(".")
-    dir_comps, basename = split[:-1], split[-1]
-    attempts = []
-    for ext in extension_suffixes:
-        try:
-            filename = basename + ext
-            return load_lib(pycryptodome_filename(dir_comps, filename),
-                            cdecl)
-        except OSError as exp:
-            attempts.append("Trying '%s': %s" % (filename, str(exp)))
-    raise OSError("Cannot load native module '%s': %s" % (name, ", ".join(attempts)))
+    return load_lib(name, cdecl)
+    # split = name.split(".")
+    # dir_comps, basename = split[:-1], split[-1]
+    # attempts = []
+    # for ext in extension_suffixes:
+    #     try:
+    #         filename = basename + ext
+    #         return load_lib(pycryptodome_filename(dir_comps, filename),
+    #                         cdecl)
+    #     except OSError as exp:
+    #         attempts.append("Trying '%s': %s" % (filename, str(exp)))
+    # raise OSError("Cannot load native module '%s': %s" % (name, ", ".join(attempts)))
 
 
 if sys.version_info[:2] != (2, 6):
